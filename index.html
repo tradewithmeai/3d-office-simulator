@@ -705,16 +705,28 @@
             return neonGroup;
         }
         
-        // Add neon signs - Fixed positioning and rotation
-        // EXIT sign on right wall (x=20), visible from inside room
-        const neonExit = createNeonSign('EXIT', 18, 6, 0, 0x00ff00);
-        neonExit.rotation.y = Math.PI; // Face inward toward room center
+        // Add neon signs - Testing different wall placement
+        // EXIT sign moved to BACK WALL for testing (z=-20)
+        const neonExit = createNeonSign('EXIT', 5, 6, -19.5, 0x00ff00);
+        neonExit.rotation.y = 0; // Face forward toward room center
         scene.add(neonExit);
         
         // CAFE sign on left wall (x=-20), visible from inside room  
         const neonCafe = createNeonSign('CAFE', -18, 4, 8, 0xff0080);
-        neonCafe.rotation.y = 0; // Face inward toward room center
+        neonCafe.rotation.y = Math.PI / 2; // Face inward toward room center
         scene.add(neonCafe);
+        
+        // Add DEBUG MARKER on right wall to test wall visibility
+        const debugMarker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.5, 8, 8),
+            new THREE.MeshStandardMaterial({ 
+                color: 0xff00ff, 
+                emissive: 0xff00ff,
+                emissiveIntensity: 0.5
+            })
+        );
+        debugMarker.position.set(19.5, 5, 0); // Right wall position
+        scene.add(debugMarker);
         
         // Long Corridor Extension
         const corridorLength = 60; // Very long corridor
