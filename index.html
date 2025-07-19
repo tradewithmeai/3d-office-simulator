@@ -855,10 +855,16 @@
         neonCorridor.rotation.y = -Math.PI / 2; // Face inward toward room center
         scene.add(neonCorridor);
         
-        // Long Corridor Extension
-        const corridorLength = 60; // Very long corridor
-        const corridorWidth = 6;
-        const corridorHeight = 10;
+        /* ==========================================================================
+           CORRIDOR EXPANSION SYSTEM
+           Extended office space with procedural room generation
+           ========================================================================== */
+        
+        // CORRIDOR DIMENSIONS
+        // Define the corridor that extends east from the main office
+        const corridorLength = 60; // 60 units long - very spacious corridor
+        const corridorWidth = 6;   // 6 units wide - comfortable for movement
+        const corridorHeight = 10; // 10 units high - matching office ceiling
         
         // Create proper corridor entrance with actual opening
         // Split right wall into sections around doorway
@@ -971,67 +977,90 @@
         corridorEndWall.rotation.y = Math.PI / 2;
         scene.add(corridorEndWall);
         
-        // Create multiple doors along the corridor
+        /* ==========================================================================
+           DOOR GENERATION SYSTEM
+           Procedural door creation for corridor rooms
+           ========================================================================== */
+        
+        /**
+         * Creates a complete door with frame, panel, handle, and room number
+         * Used to populate the corridor with realistic office doors
+         * @param {number} x - X position in 3D space
+         * @param {number} z - Z position in 3D space
+         * @param {number} rotation - Door rotation in radians
+         * @param {string} label - Room number/label to display
+         * @returns {THREE.Group} - Complete door assembly
+         */
         function createDoor(x, z, rotation, label) {
             const doorGroup = new THREE.Group();
             
-            // Door frame
-            const doorFrameMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
+            // DOOR FRAME (outer wooden frame)
+            const doorFrameMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x8b4513 // Dark wood brown
+            });
             const doorFrame = new THREE.Mesh(
-                new THREE.BoxGeometry(2.2, 7, 0.2),
+                new THREE.BoxGeometry(2.2, 7, 0.2), // Slightly larger than door panel
                 doorFrameMaterial
             );
             doorGroup.add(doorFrame);
             
-            // Door panel
+            // DOOR PANEL (main door surface)
             const doorMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0x654321,
-                roughness: 0.7 
+                color: 0x654321,  // Medium wood brown
+                roughness: 0.7    // Wooden surface texture
             });
             const door = new THREE.Mesh(
-                new THREE.BoxGeometry(2, 6.5, 0.15),
+                new THREE.BoxGeometry(2, 6.5, 0.15), // Slightly smaller than frame
                 doorMaterial
             );
-            door.position.y = 0.25;
-            door.position.z = 0.05;
+            door.position.y = 0.25;  // Lift slightly off ground
+            door.position.z = 0.05;  // Position in front of frame
             doorGroup.add(door);
             
-            // Door handle
+            // DOOR HANDLE (golden metallic sphere)
             const handleMaterial = new THREE.MeshStandardMaterial({ 
-                color: 0xffd700,
-                metalness: 0.8,
-                roughness: 0.2
+                color: 0xffd700,  // Gold color
+                metalness: 0.8,   // High metallic reflection
+                roughness: 0.2    // Smooth, polished surface
             });
             const handle = new THREE.Mesh(
-                new THREE.SphereGeometry(0.08, 8, 8),
+                new THREE.SphereGeometry(0.08, 8, 8), // Small sphere
                 handleMaterial
             );
-            handle.position.set(0.7, 0, 0.1);
+            handle.position.set(0.7, 0, 0.1); // Right side of door, slightly forward
             doorGroup.add(handle);
             
-            // Door number/label
+            // ROOM NUMBER LABEL (canvas-based text)
+            // Create small canvas for room number display
             const canvas = document.createElement('canvas');
-            canvas.width = 128;
+            canvas.width = 128;  // Small, efficient size
             canvas.height = 64;
             const context = canvas.getContext('2d');
+            
+            // Draw white background plate
             context.fillStyle = 'white';
             context.fillRect(0, 0, 128, 64);
+            
+            // Draw black room number text
             context.fillStyle = 'black';
             context.font = 'bold 20px Arial';
             context.textAlign = 'center';
-            context.fillText(label, 64, 40);
+            context.fillText(label, 64, 40); // Center the room number
             
+            // Convert canvas to 3D texture
             const labelTexture = new THREE.CanvasTexture(canvas);
             const labelMaterial = new THREE.MeshStandardMaterial({ map: labelTexture });
             const labelPlane = new THREE.Mesh(
-                new THREE.PlaneGeometry(0.8, 0.4),
+                new THREE.PlaneGeometry(0.8, 0.4), // Small rectangular sign
                 labelMaterial
             );
-            labelPlane.position.set(0, 2, 0.16);
+            labelPlane.position.set(0, 2, 0.16); // Above handle, slightly forward
             doorGroup.add(labelPlane);
             
-            doorGroup.position.set(x, 3.5, z);
-            doorGroup.rotation.y = rotation;
+            // FINAL POSITIONING
+            // Position and orient the complete door assembly
+            doorGroup.position.set(x, 3.5, z); // Position in 3D space
+            doorGroup.rotation.y = rotation;    // Rotate to face correct direction
             return doorGroup;
         }
         
@@ -1066,37 +1095,58 @@
         emergencyLight.position.set(20 + corridorLength - 5, 8, 0);
         scene.add(emergencyLight);
         
-        // Interactive Bouncing Ball
-        const ballGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+        /* ==========================================================================
+           INTERACTIVE PHYSICS SYSTEM
+           Real-time physics simulation with player interaction
+           ========================================================================== */
+        
+        // BOUNCING BALL OBJECT
+        // Create ball geometry
+        const ballGeometry = new THREE.SphereGeometry(0.3, 16, 16); // Radius 0.3, smooth sphere
+        
+        // Ball material with dynamic visual effects
         const ballMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0xff4444,
-            roughness: 0.4,
-            metalness: 0.1,
-            transparent: true,
-            opacity: 0.9,
-            emissive: 0x331111,
-            emissiveIntensity: 0.2
+            color: 0xff4444,           // Red base color
+            roughness: 0.4,            // Slight surface roughness
+            metalness: 0.1,            // Minimal metallic reflection
+            transparent: true,         // Allow transparency effects
+            opacity: 0.9,              // Slight transparency
+            emissive: 0x331111,        // Self-illumination (dark red)
+            emissiveIntensity: 0.2     // Low glow intensity
         });
+        
+        // Create ball mesh
         const ball = new THREE.Mesh(ballGeometry, ballMaterial);
-        ball.position.set(5, 2, 5); // Start higher for bouncing
-        ball.castShadow = true;
-        ball.receiveShadow = true;
+        ball.position.set(5, 2, 5);  // Start elevated for dramatic drop
+        ball.castShadow = true;       // Ball casts shadows
+        ball.receiveShadow = true;    // Ball receives shadows
         
-        // Add glow effect
-        const ballGlow = new THREE.PointLight(0xff4444, 0.5, 5);
-        ball.add(ballGlow);
+        // Add point light for glow effect
+        const ballGlow = new THREE.PointLight(
+            0xff4444, // Red glow matching ball color
+            0.5,      // Medium intensity
+            5         // Limited range
+        );
+        ball.add(ballGlow); // Attach light to ball (moves with it)
         
-        // Physics properties
+        // PHYSICS SIMULATION DATA
+        // Store physics properties in userData for easy access
         ball.userData = {
-            velocity: new THREE.Vector3(0.1, 0, 0.08),
-            gravity: -0.015,
-            bounce: 0.8, // Energy retained after bounce
-            friction: 0.98, // Air/ground friction
-            radius: 0.3,
-            isGrounded: false,
-            recentlyKicked: false, // Prevent spam kicking
-            kickCooldown: 0
+            // Motion vectors
+            velocity: new THREE.Vector3(0.1, 0, 0.08), // Initial velocity (x, y, z)
+            
+            // Physics constants
+            gravity: -0.015,           // Downward acceleration
+            bounce: 0.8,               // Energy retained after bounce (0-1)
+            friction: 0.98,            // Air/ground friction multiplier
+            radius: 0.3,               // Ball radius for collision detection
+            
+            // State tracking
+            isGrounded: false,         // Whether ball is touching ground
+            recentlyKicked: false,     // Prevent multiple kicks in sequence
+            kickCooldown: 0            // Time remaining before next kick allowed
         };
+        
         scene.add(ball);
         
         // Plant decorations
@@ -1147,148 +1197,226 @@
         coffeeMachine.position.set(-18, 1.05, 10);
         scene.add(coffeeMachine);
         
-        // Character creation
+        /* ==========================================================================
+           CHARACTER SYSTEM
+           AI-powered 3D characters with personality and dialogue
+           ========================================================================== */
+        
+        // Global array to store all character instances
         const characters = [];
         
+        /**
+         * Creates a 3D character with AI personality and dialogue capabilities
+         * Characters are built from primitive geometries and include behavioral AI
+         * @param {string} name - Character's display name
+         * @param {string} role - Job title/role in the office
+         * @param {number} x - Starting X position
+         * @param {number} z - Starting Z position
+         * @param {number} shirtColor - Hex color for character's clothing
+         * @param {Object} characterData - Personality traits and behaviors
+         * @returns {THREE.Group} - Complete 3D character object
+         */
         function createCharacter(name, role, x, z, shirtColor, characterData) {
             const group = new THREE.Group();
             
-            // Torso
-            const torsoGeometry = new THREE.CylinderGeometry(0.25, 0.3, 0.8, 8);
+            // CHARACTER BODY CONSTRUCTION
+            // Build character from primitive 3D shapes
+            
+            // Torso (main body) - tapered cylinder for natural shape
+            const torsoGeometry = new THREE.CylinderGeometry(
+                0.25, // Top radius (shoulders)
+                0.3,  // Bottom radius (waist)
+                0.8,  // Height
+                8     // Radial segments for smooth curves
+            );
             const torsoMaterial = new THREE.MeshStandardMaterial({ color: shirtColor });
             const torso = new THREE.Mesh(torsoGeometry, torsoMaterial);
-            torso.position.y = 0.6;
-            torso.castShadow = true;
+            torso.position.y = 0.6; // Lift above ground
+            torso.castShadow = true; // Enable shadow casting
             group.add(torso);
             
-            // Arms
+            // Arms - positioned at shoulder level with natural pose
             const armGeometry = new THREE.CylinderGeometry(0.08, 0.08, 0.6, 6);
             const armMaterial = new THREE.MeshStandardMaterial({ color: shirtColor });
             
+            // Left arm with slight outward angle
             const leftArm = new THREE.Mesh(armGeometry, armMaterial);
-            leftArm.position.set(-0.3, 0.7, 0);
-            leftArm.rotation.z = Math.PI / 8;
+            leftArm.position.set(-0.3, 0.7, 0); // Left of torso, at shoulder height
+            leftArm.rotation.z = Math.PI / 8;    // 22.5° outward angle
             group.add(leftArm);
             
+            // Right arm with slight outward angle (mirrored)
             const rightArm = new THREE.Mesh(armGeometry, armMaterial);
-            rightArm.position.set(0.3, 0.7, 0);
-            rightArm.rotation.z = -Math.PI / 8;
+            rightArm.position.set(0.3, 0.7, 0);  // Right of torso, at shoulder height
+            rightArm.rotation.z = -Math.PI / 8;  // -22.5° outward angle
             group.add(rightArm);
             
-            // Legs
+            // Legs - dark colored pants/trousers
             const legGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.8, 6);
-            const legMaterial = new THREE.MeshStandardMaterial({ color: 0x2c3e50 });
+            const legMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x2c3e50 // Dark blue-gray for professional pants
+            });
             
+            // Left leg
             const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
-            leftLeg.position.set(-0.15, 0.4, 0);
+            leftLeg.position.set(-0.15, 0.4, 0); // Left of center, mid-height
             group.add(leftLeg);
             
+            // Right leg
             const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
-            rightLeg.position.set(0.15, 0.4, 0);
+            rightLeg.position.set(0.15, 0.4, 0);  // Right of center, mid-height
             group.add(rightLeg);
             
-            // Head
+            // Head - sphere geometry for simple but effective representation
             const headGeometry = new THREE.SphereGeometry(0.25, 8, 6);
-            const headMaterial = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+            const headMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xffdbac // Skin tone color
+            });
             const head = new THREE.Mesh(headGeometry, headMaterial);
-            head.position.y = 1.25;
-            head.castShadow = true;
+            head.position.y = 1.25;   // Top of torso
+            head.castShadow = true;   // Head casts shadows
             group.add(head);
             
-            // Hair
+            // Hair - slightly larger sphere, flattened for hair-like appearance
             const hairGeometry = new THREE.SphereGeometry(0.27, 8, 6);
-            const hairMaterial = new THREE.MeshStandardMaterial({ color: characterData.hairColor });
+            const hairMaterial = new THREE.MeshStandardMaterial({ 
+                color: characterData.hairColor // Custom hair color per character
+            });
             const hair = new THREE.Mesh(hairGeometry, hairMaterial);
-            hair.position.y = 1.35;
-            hair.scale.y = 0.6;
+            hair.position.y = 1.35; // Slightly above head center
+            hair.scale.y = 0.6;     // Flatten to look more like hair
             group.add(hair);
             
-            // Eyes
+            // Eyes - small black spheres for facial features
             const eyeGeometry = new THREE.SphereGeometry(0.03, 4, 4);
-            const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            const eyeMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x000000 // Black eyes
+            });
             
+            // Left eye
             const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-            leftEye.position.set(-0.08, 1.25, 0.22);
+            leftEye.position.set(-0.08, 1.25, 0.22); // Left side, at head level, forward
             group.add(leftEye);
             
+            // Right eye
             const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-            rightEye.position.set(0.08, 1.25, 0.22);
+            rightEye.position.set(0.08, 1.25, 0.22);  // Right side, at head level, forward
             group.add(rightEye);
             
-            // Name label
+            // CHARACTER NAME LABEL
+            // Canvas-based floating label that always faces the camera
+            
+            // Create canvas for name/role text
             const canvas = document.createElement('canvas');
-            canvas.width = 256;
+            canvas.width = 256;  // High resolution for crisp text
             canvas.height = 64;
             const context = canvas.getContext('2d');
+            
+            // Draw semi-transparent white background
             context.fillStyle = 'rgba(255, 255, 255, 0.9)';
             context.fillRect(0, 0, 256, 64);
+            
+            // Draw character name (larger, bold)
             context.fillStyle = 'black';
             context.font = 'bold 20px Arial';
             context.textAlign = 'center';
-            context.fillText(name, 128, 25);
+            context.fillText(name, 128, 25); // Centered horizontally
+            
+            // Draw character role (smaller, gray)
             context.font = '16px Arial';
             context.fillStyle = '#666';
-            context.fillText(role, 128, 45);
+            context.fillText(role, 128, 45); // Below name
             
+            // Convert canvas to Three.js sprite (always faces camera)
             const texture = new THREE.CanvasTexture(canvas);
             const labelMaterial = new THREE.SpriteMaterial({ map: texture });
             const label = new THREE.Sprite(labelMaterial);
-            label.position.y = 1.8;
-            label.scale.set(2, 0.5, 1);
+            label.position.y = 1.8;        // Float above character head
+            label.scale.set(2, 0.5, 1);    // Scale to readable size
             group.add(label);
             
+            // POSITION AND AI DATA SETUP
+            
+            // Set character's initial 3D position
             group.position.set(x, 0, z);
+            
+            // Store AI personality and behavioral data in userData
             group.userData = { 
+                // Basic character info
                 name, 
                 role, 
-                conversations: [],
-                initialPosition: new THREE.Vector3(x, 0, z),
-                targetPosition: new THREE.Vector3(x, 0, z),
-                moveTimer: 0,
-                isDancing: false,
-                tripChance: 0.001,
-                leftArm: leftArm,
-                rightArm: rightArm,
+                conversations: [],              // Chat history with player
+                
+                // AI movement system
+                initialPosition: new THREE.Vector3(x, 0, z), // Home position
+                targetPosition: new THREE.Vector3(x, 0, z),  // Current movement target
+                moveTimer: 0,                   // Time until next random movement
+                
+                // Animation states
+                isDancing: false,               // Currently dancing animation
+                tripChance: 0.001,             // Random chance to trip/stumble
+                
+                // References to body parts for animations
+                leftArm: leftArm,               // For dancing arm movements
+                rightArm: rightArm,             // For dancing arm movements
+                
+                // Merge custom personality data (hairColor, personality, quirk, etc.)
                 ...characterData
             };
             
+            // Add to global characters array for AI updates
             characters.push(group);
             return group;
         }
         
-        // Add sample characters (you can customize these!)
+        /* ==========================================================================
+           CHARACTER INSTANCES
+           Create the office team with unique personalities and roles
+           ========================================================================== */
+        
+        // Lead Developer - Alex Chen (Back-left position)
         const character1 = createCharacter('Alex Chen', 'Lead Developer', -10, -5, 0x4169e1, {
-            hairColor: 0x3d3d3d,
-            personality: 'thoughtful and innovative',
-            quirk: 'explains everything with code analogies'
+            hairColor: 0x3d3d3d,                           // Dark gray hair
+            personality: 'thoughtful and innovative',       // Personality trait
+            quirk: 'explains everything with code analogies' // Conversation style
         });
         
+        // UX Designer - Sarah Kim (Back-right position)
         const character2 = createCharacter('Sarah Kim', 'UX Designer', 10, -5, 0x9370db, {
-            hairColor: 0x4b0082,
-            personality: 'creative and user-focused',
-            quirk: 'sees the world as wireframes'
+            hairColor: 0x4b0082,                        // Dark purple hair
+            personality: 'creative and user-focused',   // Personality trait
+            quirk: 'sees the world as wireframes'      // Conversation style
         });
         
+        // Data Scientist - Mike Torres (Front-left position)
         const character3 = createCharacter('Mike Torres', 'Data Scientist', -10, 5, 0x228b22, {
-            hairColor: 0x8b4513,
-            personality: 'analytical and precise',
-            quirk: 'gets excited about correlation coefficients'
+            hairColor: 0x8b4513,                                // Brown hair
+            personality: 'analytical and precise',              // Personality trait
+            quirk: 'gets excited about correlation coefficients' // Conversation style
         });
         
+        // Product Manager - Jamie Liu (Front-right position)
         const character4 = createCharacter('Jamie Liu', 'Product Manager', 10, 5, 0xffa500, {
-            hairColor: 0x8b4513,
-            personality: 'strategic and collaborative',
-            quirk: 'organizes everything into sprints'
+            hairColor: 0x8b4513,                        // Brown hair
+            personality: 'strategic and collaborative', // Personality trait
+            quirk: 'organizes everything into sprints' // Conversation style
         });
         
+        // Add all characters to the 3D scene
         scene.add(character1, character2, character3, character4);
         
-        // Player controls
+        /* ==========================================================================
+           PLAYER CONTROL SYSTEM
+           First-person camera controls and movement
+           ========================================================================== */
+        
+        // PLAYER STATE OBJECT
+        // Represents the player's position and movement in 3D space
         const player = {
-            position: new THREE.Vector3(0, 1.6, 5),
-            velocity: new THREE.Vector3(0, 0, 0),
-            speed: 0.1,
-            isDancing: false
+            position: new THREE.Vector3(0, 1.6, 5), // Start position (center, eye level, back)
+            velocity: new THREE.Vector3(0, 0, 0),   // Current movement velocity
+            speed: 0.1,                             // Movement speed multiplier
+            isDancing: false                        // Dancing animation state
         };
         
         const keys = {};
@@ -1596,13 +1724,23 @@
             }
         });
         
-        // Animation loop
-        let lastTime = 0;
+        /* ==========================================================================
+           MAIN ANIMATION LOOP
+           60fps game loop handling all updates and rendering
+           ========================================================================== */
         
+        let lastTime = 0; // Track time for delta calculations
+        
+        /**
+         * Main animation function - runs 60 times per second
+         * Handles all game updates: physics, AI, controls, rendering
+         * @param {number} currentTime - Current timestamp from requestAnimationFrame
+         */
         function animate(currentTime) {
-            requestAnimationFrame(animate);
+            requestAnimationFrame(animate); // Schedule next frame
             
-            const deltaTime = (currentTime - lastTime) / 1000;
+            // Calculate delta time for frame-rate independent movement
+            const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
             lastTime = currentTime;
             
             // Update lighting animations
@@ -1681,16 +1819,21 @@
                 }
             });
             
-            // Update Interactive Ball Physics
+            /* ==========================================================================
+               PHYSICS SIMULATION UPDATE
+               Real-time physics for interactive objects
+               ========================================================================== */
+            
+            // UPDATE BALL PHYSICS
             const ballData = ball.userData;
             
-            // Apply gravity
+            // Apply gravitational acceleration (constant downward force)
             ballData.velocity.y += ballData.gravity;
             
-            // Apply friction
+            // Apply air resistance and ground friction
             ballData.velocity.multiplyScalar(ballData.friction);
             
-            // Update position
+            // Update ball position based on velocity
             ball.position.add(ballData.velocity);
             
             // Ground collision (with some bounce tolerance)
@@ -1724,54 +1867,65 @@
                 createFloatingText('Smack!', ball.position);
             }
             
-            // Player interaction - kick the ball with proper 2D collision detection!
-            // Use 2D distance (ignore Y axis) since player is tall and ball is on ground
+            /* ==========================================================================
+               PLAYER-BALL INTERACTION SYSTEM
+               2D collision detection for realistic ball kicking
+               ========================================================================== */
+            
+            // COLLISION DETECTION
+            // Use 2D distance calculation (ignore Y axis) since:
+            // - Player is tall (1.6 units) and ball is on ground (0.3 units)
+            // - Only horizontal distance matters for kicking
             const playerPos2D = new THREE.Vector2(player.position.x, player.position.z);
             const ballPos2D = new THREE.Vector2(ball.position.x, ball.position.z);
             const playerBallDistance2D = playerPos2D.distanceTo(ballPos2D);
             
-            const playerRadius = 0.5; // Player collision radius
-            const combinedRadius = playerRadius + ballData.radius;
+            // Define collision boundaries
+            const playerRadius = 0.5; // Player's collision radius
+            const combinedRadius = playerRadius + ballData.radius; // Total collision distance
             
-            // Update kick cooldown
+            // Update kick cooldown timer (prevents spam kicking)
             if (ballData.kickCooldown > 0) {
                 ballData.kickCooldown -= deltaTime;
             }
             
-            // Check for 2D collision (ignore height difference)
+            // Check if player is close enough to kick ball
             const isColliding = playerBallDistance2D <= combinedRadius;
             
+            // KICK PHYSICS CALCULATION
             if (isColliding && ballData.kickCooldown <= 0) {
-                // Calculate kick direction from player center to ball center
+                // Calculate kick direction vector (from player to ball)
                 const kickDirection = new THREE.Vector3()
                     .subVectors(ball.position, player.position);
                 
-                // Only kick if there's a meaningful direction (not standing exactly on top)
+                // Only process kick if there's meaningful separation
                 if (kickDirection.length() > 0.1) {
-                    kickDirection.normalize();
+                    kickDirection.normalize(); // Convert to unit vector
                     
-                    // Calculate kick strength based on player movement
+                    // DYNAMIC KICK STRENGTH SYSTEM
+                    // Base strength + bonus for player movement speed
                     const playerMovementSpeed = player.velocity.length();
-                    const baseKickStrength = 0.4;
-                    const movementBonus = playerMovementSpeed * 2; // More momentum = harder kick
+                    const baseKickStrength = 0.4;                    // Minimum kick power
+                    const movementBonus = playerMovementSpeed * 2;   // Running = harder kick
                     const totalKickStrength = baseKickStrength + movementBonus;
                     
-                    // Apply kick force
+                    // APPLY KICK FORCES
+                    // Add horizontal kick force
                     ballData.velocity.add(kickDirection.multiplyScalar(totalKickStrength));
-                    ballData.velocity.y += 0.15; // Add slight upward component
+                    ballData.velocity.y += 0.15; // Add upward component for realistic arc
                     
-                    // Set cooldown to prevent spam kicking
-                    ballData.kickCooldown = 0.3; // 300ms cooldown
+                    // KICK COOLDOWN (prevent rapid-fire kicking)
+                    ballData.kickCooldown = 0.3; // 300ms between kicks
                     
-                    // Visual feedback
-                    createFloatingText('KICK!', ball.position);
+                    // VISUAL AND AUDIO FEEDBACK
+                    createFloatingText('KICK!', ball.position); // Show floating text
                     
-                    // Debug output to console
+                    // Console logging for debugging
                     console.log(`🦶 KICK! Distance: ${playerBallDistance2D.toFixed(2)}, Strength: ${totalKickStrength.toFixed(2)}`);
                     
-                    // Add screen shake effect for impact feeling
+                    // Extra effects for powerful kicks
                     if (totalKickStrength > 0.6) {
-                        createFloatingText('💥', ball.position);
+                        createFloatingText('💥', ball.position); // Show impact effect
                     }
                 }
             }
