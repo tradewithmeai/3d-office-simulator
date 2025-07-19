@@ -742,7 +742,8 @@
             friction: 0.98, // Air/ground friction
             radius: 0.3,
             isGrounded: false,
-            lastPlayerDistance: Infinity
+            recentlyKicked: false, // Prevent spam kicking
+            kickCooldown: 0
         };
         scene.add(ball);
         
@@ -1371,25 +1372,50 @@
                 createFloatingText('Smack!', ball.position);
             }
             
-            // Player interaction - kick the ball!
+            // Player interaction - kick the ball with proper collision detection!
             const playerBallDistance = player.position.distanceTo(ball.position);
-            if (playerBallDistance < 1.5 && playerBallDistance < ballData.lastPlayerDistance) {
-                // Player is getting closer - potential kick
-                if (playerBallDistance < 0.8) {
-                    // Calculate kick direction from player to ball
-                    const kickDirection = new THREE.Vector3()
-                        .subVectors(ball.position, player.position)
-                        .normalize();
+            const playerRadius = 0.5; // Player collision radius
+            const combinedRadius = playerRadius + ballData.radius;
+            
+            // Update kick cooldown
+            if (ballData.kickCooldown > 0) {
+                ballData.kickCooldown -= deltaTime;
+            }
+            
+            // Check for collision (not just proximity)
+            const isColliding = playerBallDistance <= combinedRadius;
+            
+            if (isColliding && ballData.kickCooldown <= 0) {
+                // Calculate kick direction from player center to ball center
+                const kickDirection = new THREE.Vector3()
+                    .subVectors(ball.position, player.position);
+                
+                // Only kick if there's a meaningful direction (not standing exactly on top)
+                if (kickDirection.length() > 0.1) {
+                    kickDirection.normalize();
                     
-                    // Add kick force
-                    const kickStrength = 0.3;
-                    ballData.velocity.add(kickDirection.multiplyScalar(kickStrength));
-                    ballData.velocity.y += 0.2; // Add some upward force
+                    // Calculate kick strength based on player movement
+                    const playerMovementSpeed = player.velocity.length();
+                    const baseKickStrength = 0.4;
+                    const movementBonus = playerMovementSpeed * 2; // More momentum = harder kick
+                    const totalKickStrength = baseKickStrength + movementBonus;
                     
+                    // Apply kick force
+                    ballData.velocity.add(kickDirection.multiplyScalar(totalKickStrength));
+                    ballData.velocity.y += 0.15; // Add slight upward component
+                    
+                    // Set cooldown to prevent spam kicking
+                    ballData.kickCooldown = 0.3; // 300ms cooldown
+                    
+                    // Visual feedback
                     createFloatingText('KICK!', ball.position);
+                    
+                    // Add screen shake effect for impact feeling
+                    if (totalKickStrength > 0.6) {
+                        createFloatingText('💥', ball.position);
+                    }
                 }
             }
-            ballData.lastPlayerDistance = playerBallDistance;
             
             // Add some rotation based on movement
             ball.rotation.x += ballData.velocity.z * 0.1;
