@@ -193,6 +193,8 @@
         <p id="interact-instruction">Press E to interact</p>
         <p id="dance-instruction">Press SPACE to dance</p>
         <p id="close-instruction">Press ESC to close dialogs/release mouse</p>
+        <p id="ball-instruction">Walk into the red ball to kick it</p>
+        <p id="throw-instruction">Click on the ball to throw it</p>
         <p class="instruction" style="margin-top: 10px;" id="tip-instruction">💡 Type custom questions when talking!</p>
     </div>
     
@@ -712,13 +714,37 @@
         neonCafe.rotation.y = Math.PI / 2;
         scene.add(neonCafe);
         
-        // Roomba
-        const roombaGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16);
-        const roombaMaterial = new THREE.MeshStandardMaterial({ color: 0x4169e1 });
-        const roomba = new THREE.Mesh(roombaGeometry, roombaMaterial);
-        roomba.position.set(5, 0.05, 5);
-        roomba.userData = { velocity: new THREE.Vector3(0.05, 0, 0.05) };
-        scene.add(roomba);
+        // Interactive Bouncing Ball
+        const ballGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+        const ballMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xff4444,
+            roughness: 0.4,
+            metalness: 0.1,
+            transparent: true,
+            opacity: 0.9,
+            emissive: 0x331111,
+            emissiveIntensity: 0.2
+        });
+        const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+        ball.position.set(5, 2, 5); // Start higher for bouncing
+        ball.castShadow = true;
+        ball.receiveShadow = true;
+        
+        // Add glow effect
+        const ballGlow = new THREE.PointLight(0xff4444, 0.5, 5);
+        ball.add(ballGlow);
+        
+        // Physics properties
+        ball.userData = {
+            velocity: new THREE.Vector3(0.1, 0, 0.08),
+            gravity: -0.015,
+            bounce: 0.8, // Energy retained after bounce
+            friction: 0.98, // Air/ground friction
+            radius: 0.3,
+            isGrounded: false,
+            lastPlayerDistance: Infinity
+        };
+        scene.add(ball);
         
         // Plant decorations
         const plantPot = new THREE.Mesh(
@@ -1302,13 +1328,104 @@
                 }
             });
             
-            // Update Roomba
-            roomba.rotation.y += 0.05;
-            roomba.position.add(roomba.userData.velocity);
+            // Update Interactive Ball Physics
+            const ballData = ball.userData;
             
-            if (Math.abs(roomba.position.x) > 18 || Math.abs(roomba.position.z) > 18) {
-                roomba.userData.velocity.multiplyScalar(-1);
-                createFloatingText('Bonk!', roomba.position);
+            // Apply gravity
+            ballData.velocity.y += ballData.gravity;
+            
+            // Apply friction
+            ballData.velocity.multiplyScalar(ballData.friction);
+            
+            // Update position
+            ball.position.add(ballData.velocity);
+            
+            // Ground collision (with some bounce tolerance)
+            if (ball.position.y <= ballData.radius) {
+                ball.position.y = ballData.radius;
+                if (ballData.velocity.y < 0) {
+                    ballData.velocity.y = -ballData.velocity.y * ballData.bounce;
+                    ballData.isGrounded = true;
+                    
+                    // Create bounce effect
+                    if (Math.abs(ballData.velocity.y) > 0.05) {
+                        createFloatingText('Bounce!', ball.position);
+                    }
+                } else {
+                    ballData.isGrounded = true;
+                }
+            } else {
+                ballData.isGrounded = false;
+            }
+            
+            // Wall collisions
+            const wallBounce = 18 - ballData.radius;
+            if (Math.abs(ball.position.x) > wallBounce) {
+                ball.position.x = Math.sign(ball.position.x) * wallBounce;
+                ballData.velocity.x = -ballData.velocity.x * ballData.bounce;
+                createFloatingText('Bonk!', ball.position);
+            }
+            if (Math.abs(ball.position.z) > wallBounce) {
+                ball.position.z = Math.sign(ball.position.z) * wallBounce;
+                ballData.velocity.z = -ballData.velocity.z * ballData.bounce;
+                createFloatingText('Smack!', ball.position);
+            }
+            
+            // Player interaction - kick the ball!
+            const playerBallDistance = player.position.distanceTo(ball.position);
+            if (playerBallDistance < 1.5 && playerBallDistance < ballData.lastPlayerDistance) {
+                // Player is getting closer - potential kick
+                if (playerBallDistance < 0.8) {
+                    // Calculate kick direction from player to ball
+                    const kickDirection = new THREE.Vector3()
+                        .subVectors(ball.position, player.position)
+                        .normalize();
+                    
+                    // Add kick force
+                    const kickStrength = 0.3;
+                    ballData.velocity.add(kickDirection.multiplyScalar(kickStrength));
+                    ballData.velocity.y += 0.2; // Add some upward force
+                    
+                    createFloatingText('KICK!', ball.position);
+                }
+            }
+            ballData.lastPlayerDistance = playerBallDistance;
+            
+            // Add some rotation based on movement
+            ball.rotation.x += ballData.velocity.z * 0.1;
+            ball.rotation.z -= ballData.velocity.x * 0.1;
+            
+            // Dynamic visual effects based on speed
+            const speed = ballData.velocity.length();
+            
+            // Adjust glow intensity based on speed
+            const glowLight = ball.children[0]; // The point light we added
+            if (glowLight) {
+                glowLight.intensity = 0.3 + speed * 2;
+                glowLight.distance = 3 + speed * 5;
+            }
+            
+            // Adjust material emissive based on speed
+            ballMaterial.emissiveIntensity = 0.1 + speed * 0.5;
+            
+            // Color shift based on speed (red to yellow when fast)
+            if (speed > 0.3) {
+                ballMaterial.color.setHSL(0.1 - speed * 0.1, 1, 0.5); // Red to yellow
+                ballMaterial.emissive.setHSL(0.1 - speed * 0.1, 1, 0.2);
+            } else {
+                ballMaterial.color.setHex(0xff4444); // Default red
+                ballMaterial.emissive.setHex(0x331111);
+            }
+            
+            // Add trail effect for fast movement
+            if (speed > 0.4 && Math.random() < 0.3) {
+                const trailPos = ball.position.clone();
+                trailPos.add(new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.5,
+                    (Math.random() - 0.5) * 0.5,
+                    (Math.random() - 0.5) * 0.5
+                ));
+                createFloatingText('✨', trailPos);
             }
             
             // Check for nearby characters
@@ -1350,9 +1467,35 @@
             }
         });
         
-        renderer.domElement.addEventListener('click', () => {
+        // Ball throwing mechanics
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        renderer.domElement.addEventListener('click', (event) => {
             if (!dialogueBox.style.display || dialogueBox.style.display === 'none') {
-                renderer.domElement.requestPointerLock();
+                // Check if we clicked on the ball first
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObject(ball);
+                
+                if (intersects.length > 0) {
+                    // Clicked on ball - throw it!
+                    const throwDirection = new THREE.Vector3(0, 0, -1);
+                    throwDirection.applyQuaternion(camera.quaternion);
+                    throwDirection.normalize();
+                    
+                    // Add throw force
+                    const throwStrength = 0.5;
+                    ball.userData.velocity.add(throwDirection.multiplyScalar(throwStrength));
+                    ball.userData.velocity.y += 0.3; // Add upward arc
+                    
+                    createFloatingText('THROW!', ball.position);
+                } else {
+                    // Normal pointer lock request
+                    renderer.domElement.requestPointerLock();
+                }
             }
         });
         
