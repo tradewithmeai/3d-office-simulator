@@ -714,6 +714,171 @@
         neonCafe.rotation.y = Math.PI / 2;
         scene.add(neonCafe);
         
+        // Long Corridor Extension
+        const corridorLength = 60; // Very long corridor
+        const corridorWidth = 6;
+        const corridorHeight = 10;
+        
+        // Create corridor opening in the right wall
+        const corridorOpening = new THREE.Mesh(
+            new THREE.PlaneGeometry(corridorWidth, corridorHeight),
+            new THREE.MeshStandardMaterial({ 
+                color: 0x2a2a2a, // Darker to show depth
+                transparent: true,
+                opacity: 0.1
+            })
+        );
+        corridorOpening.position.set(20, 5, 0);
+        corridorOpening.rotation.y = -Math.PI / 2;
+        scene.add(corridorOpening);
+        
+        // Corridor floor
+        const corridorFloor = new THREE.Mesh(
+            new THREE.PlaneGeometry(corridorLength, corridorWidth),
+            new THREE.MeshStandardMaterial({ 
+                color: 0xc8c8c8,
+                roughness: 0.8
+            })
+        );
+        corridorFloor.rotation.x = -Math.PI / 2;
+        corridorFloor.position.set(20 + corridorLength/2, 0, 0);
+        corridorFloor.receiveShadow = true;
+        scene.add(corridorFloor);
+        
+        // Corridor ceiling
+        const corridorCeiling = new THREE.Mesh(
+            new THREE.PlaneGeometry(corridorLength, corridorWidth),
+            new THREE.MeshStandardMaterial({ 
+                color: 0xf0f0f0,
+                roughness: 0.9
+            })
+        );
+        corridorCeiling.rotation.x = Math.PI / 2;
+        corridorCeiling.position.set(20 + corridorLength/2, corridorHeight, 0);
+        scene.add(corridorCeiling);
+        
+        // Corridor walls
+        const corridorLeftWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(corridorLength, corridorHeight),
+            wallMaterial
+        );
+        corridorLeftWall.position.set(20 + corridorLength/2, 5, -corridorWidth/2);
+        corridorLeftWall.receiveShadow = true;
+        scene.add(corridorLeftWall);
+        
+        const corridorRightWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(corridorLength, corridorHeight),
+            wallMaterial
+        );
+        corridorRightWall.position.set(20 + corridorLength/2, 5, corridorWidth/2);
+        corridorRightWall.rotation.y = Math.PI;
+        corridorRightWall.receiveShadow = true;
+        scene.add(corridorRightWall);
+        
+        // End wall of corridor
+        const corridorEndWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(corridorWidth, corridorHeight),
+            wallMaterial
+        );
+        corridorEndWall.position.set(20 + corridorLength, 5, 0);
+        corridorEndWall.rotation.y = Math.PI / 2;
+        scene.add(corridorEndWall);
+        
+        // Create multiple doors along the corridor
+        function createDoor(x, z, rotation, label) {
+            const doorGroup = new THREE.Group();
+            
+            // Door frame
+            const doorFrameMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
+            const doorFrame = new THREE.Mesh(
+                new THREE.BoxGeometry(2.2, 7, 0.2),
+                doorFrameMaterial
+            );
+            doorGroup.add(doorFrame);
+            
+            // Door panel
+            const doorMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x654321,
+                roughness: 0.7 
+            });
+            const door = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 6.5, 0.15),
+                doorMaterial
+            );
+            door.position.y = 0.25;
+            door.position.z = 0.05;
+            doorGroup.add(door);
+            
+            // Door handle
+            const handleMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xffd700,
+                metalness: 0.8,
+                roughness: 0.2
+            });
+            const handle = new THREE.Mesh(
+                new THREE.SphereGeometry(0.08, 8, 8),
+                handleMaterial
+            );
+            handle.position.set(0.7, 0, 0.1);
+            doorGroup.add(handle);
+            
+            // Door number/label
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 64;
+            const context = canvas.getContext('2d');
+            context.fillStyle = 'white';
+            context.fillRect(0, 0, 128, 64);
+            context.fillStyle = 'black';
+            context.font = 'bold 20px Arial';
+            context.textAlign = 'center';
+            context.fillText(label, 64, 40);
+            
+            const labelTexture = new THREE.CanvasTexture(canvas);
+            const labelMaterial = new THREE.MeshStandardMaterial({ map: labelTexture });
+            const labelPlane = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.8, 0.4),
+                labelMaterial
+            );
+            labelPlane.position.set(0, 2, 0.16);
+            doorGroup.add(labelPlane);
+            
+            doorGroup.position.set(x, 3.5, z);
+            doorGroup.rotation.y = rotation;
+            return doorGroup;
+        }
+        
+        // Add doors along the left wall of corridor
+        const doorSpacing = 8;
+        for (let i = 0; i < 6; i++) {
+            const doorX = 25 + (i * doorSpacing);
+            const leftDoor = createDoor(doorX, -2.9, 0, `${101 + i}`);
+            scene.add(leftDoor);
+        }
+        
+        // Add doors along the right wall of corridor  
+        for (let i = 0; i < 6; i++) {
+            const doorX = 27 + (i * doorSpacing);
+            const rightDoor = createDoor(doorX, 2.9, Math.PI, `${201 + i}`);
+            scene.add(rightDoor);
+        }
+        
+        // Corridor lighting
+        const corridorLights = [];
+        for (let i = 0; i < 8; i++) {
+            const lightX = 25 + (i * 7);
+            const corridorLight = new THREE.PointLight(0xffffff, 0.6, 12);
+            corridorLight.position.set(lightX, 8, 0);
+            corridorLight.castShadow = true;
+            scene.add(corridorLight);
+            corridorLights.push(corridorLight);
+        }
+        
+        // Emergency lighting for atmosphere
+        const emergencyLight = new THREE.PointLight(0xff4444, 0.3, 15);
+        emergencyLight.position.set(20 + corridorLength - 5, 8, 0);
+        scene.add(emergencyLight);
+        
         // Interactive Bouncing Ball
         const ballGeometry = new THREE.SphereGeometry(0.3, 16, 16);
         const ballMaterial = new THREE.MeshStandardMaterial({ 
@@ -1297,8 +1462,8 @@
             player.position.add(forward.multiplyScalar(player.velocity.z));
             player.position.add(right.multiplyScalar(player.velocity.x));
             
-            // Keep player in bounds
-            player.position.x = Math.max(-18, Math.min(18, player.position.x));
+            // Keep player in bounds (extended for corridor)
+            player.position.x = Math.max(-18, Math.min(78, player.position.x)); // Extended to end of corridor
             player.position.z = Math.max(-18, Math.min(18, player.position.z));
             
             // Dancing animation
