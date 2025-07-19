@@ -537,14 +537,7 @@
             return new THREE.CanvasTexture(canvas);
         }
         
-        const logoTexture = createTextTexture('TECH SOLUTIONS', '#1e3a8a', '#ffffff', 36);
-        const logoMaterial = new THREE.MeshStandardMaterial({ map: logoTexture });
-        const logo = new THREE.Mesh(
-            new THREE.PlaneGeometry(6, 3),
-            logoMaterial
-        );
-        logo.position.set(0, 6, -19.7);
-        scene.add(logo);
+        // Company logo removed - was conflicting with EXIT sign positioning
         
         // Motivational Posters
         const posterMessages = [
