@@ -3,7 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Office Simulator - Local Development</title>
+    <title>3D Office Simulator</title>
+    <meta name="description" content="Interactive 3D office environment with AI-powered characters, real-time physics, and immersive workplace simulation.">
+    <meta name="keywords" content="3D office, virtual office, interactive simulation, workplace, three.js, webgl">
+    <meta name="author" content="3D Office Simulator">
+    <meta property="og:title" content="3D Office Simulator">
+    <meta property="og:description" content="Explore an interactive 3D office environment with AI characters and realistic physics.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="3D Office Simulator">
+    <meta name="twitter:description" content="Interactive 3D office environment with AI-powered characters.">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon.ico">
     <style>
         body {
             margin: 0;
@@ -163,27 +174,11 @@
             100% { opacity: 0; transform: translateY(-100px); }
         }
 
-        #dev-notice {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            background: rgba(0, 255, 0, 0.1);
-            color: #00ff00;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 12px;
-            border: 1px solid #00ff00;
-        }
     </style>
 </head>
 <body>
     <div id="canvas-container"></div>
     
-    <div id="dev-notice">
-        LOCAL DEV MODE<br>
-        Ready for Claude Code!
-    </div>
     
     <div id="ui-overlay">
         <h2 id="title">3D Office Simulator</h2>
@@ -195,7 +190,7 @@
         <p id="close-instruction">Press ESC to close dialogs/release mouse</p>
         <p id="ball-instruction">Walk into the red ball to kick it</p>
         <p id="throw-instruction">Click on the ball to throw it</p>
-        <p class="instruction" style="margin-top: 10px;" id="tip-instruction">💡 Type custom questions when talking!</p>
+        <p class="instruction" style="margin-top: 10px;" id="tip-instruction">💡 Ask custom questions during conversations!</p>
     </div>
     
     <div id="dialogue-box">
@@ -213,8 +208,8 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        console.log('🚀 3D Office Simulator - Local Development Mode');
-        console.log('Ready for customization with Claude Code!');
+        console.log('🚀 3D Office Simulator loaded successfully!');
+        console.log('Interactive 3D office environment ready.');
         
         // Scene setup
         const scene = new THREE.Scene();
@@ -1744,9 +1739,8 @@
         
         animate(0);
         
-        console.log('🚀 3D Office Simulator loaded successfully!');
-        console.log('WASD to move, E to interact, SPACE to dance, ESC to exit dialogues');
-        console.log('Ready for Claude Code development!');
+        console.log('Controls: WASD to move, E to interact, SPACE to dance, ESC to exit dialogues');
+        console.log('Explore the office and corridor - interact with characters and objects!');
     </script>
 </body>
 </html>
