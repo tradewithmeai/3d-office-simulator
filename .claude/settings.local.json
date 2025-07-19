@@ -11,7 +11,8 @@
       "Bash(where gh)",
       "Bash(\"C:\\Program Files\\GitHub CLI\\gh.exe\" --version)",
       "Bash(\"C:\\Program Files\\GitHub CLI\\gh.exe\" auth login)",
-      "Bash(\"C:\\Program Files\\GitHub CLI\\gh.exe\" repo create 3d-office-simulator --public --description \"Interactive 3D Office Simulator with AI-powered characters\" --source=. --remote=origin --push)"
+      "Bash(\"C:\\Program Files\\GitHub CLI\\gh.exe\" repo create 3d-office-simulator --public --description \"Interactive 3D Office Simulator with AI-powered characters\" --source=. --remote=origin --push)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }

@@ -246,11 +246,11 @@
             setTimeout(() => div.remove(), 2000);
         }
         
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        // Enhanced Lighting System
+        const ambientLight = new THREE.AmbientLight(0xf0f8ff, 0.4);
         scene.add(ambientLight);
         
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
         directionalLight.position.set(10, 15, 10);
         directionalLight.castShadow = true;
         directionalLight.shadow.camera.near = 0.1;
@@ -262,6 +262,32 @@
         directionalLight.shadow.mapSize.width = 2048;
         directionalLight.shadow.mapSize.height = 2048;
         scene.add(directionalLight);
+        
+        // Accent lighting
+        const accentLight1 = new THREE.PointLight(0x00ff88, 0.6, 15);
+        accentLight1.position.set(-15, 8, -15);
+        scene.add(accentLight1);
+        
+        const accentLight2 = new THREE.PointLight(0xff4488, 0.6, 15);
+        accentLight2.position.set(15, 8, -15);
+        scene.add(accentLight2);
+        
+        const accentLight3 = new THREE.PointLight(0x4488ff, 0.6, 15);
+        accentLight3.position.set(0, 8, 15);
+        scene.add(accentLight3);
+        
+        // Ceiling mood lighting (subtle color changing)
+        const moodLight = new THREE.PointLight(0x6366f1, 0.3, 25);
+        moodLight.position.set(0, 12, 0);
+        scene.add(moodLight);
+        
+        // Animate mood lighting
+        let lightTime = 0;
+        function animateLighting() {
+            lightTime += 0.01;
+            const hue = (Math.sin(lightTime) + 1) * 0.5;
+            moodLight.color.setHSL(hue * 0.6 + 0.6, 0.5, 0.3);
+        }
         
         // Floor with pattern
         const floorGeometry = new THREE.PlaneGeometry(40, 40);
@@ -440,6 +466,36 @@
                 deskGroup.add(mug);
             }
             
+            // Desk lamp
+            const lampBase = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.15, 0.15, 0.05, 8),
+                metalMaterial
+            );
+            lampBase.position.set(-1, 0.82, -0.3);
+            deskGroup.add(lampBase);
+            
+            const lampArm = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.02, 0.02, 0.8, 8),
+                metalMaterial
+            );
+            lampArm.position.set(-1, 1.2, -0.3);
+            lampArm.rotation.z = Math.PI / 6;
+            deskGroup.add(lampArm);
+            
+            const lampHead = new THREE.Mesh(
+                new THREE.ConeGeometry(0.2, 0.3, 8),
+                metalMaterial
+            );
+            lampHead.position.set(-0.7, 1.5, -0.3);
+            lampHead.rotation.z = -Math.PI / 3;
+            deskGroup.add(lampHead);
+            
+            // Lamp light
+            const lampLight = new THREE.PointLight(0xffd700, 0.8, 5);
+            lampLight.position.set(-0.6, 1.4, -0.3);
+            lampLight.castShadow = true;
+            deskGroup.add(lampLight);
+            
             deskGroup.position.set(x, 0, z);
             return deskGroup;
         }
@@ -467,6 +523,194 @@
         whiteboard.position.set(0, 3, -19.8);
         whiteboard.castShadow = true;
         scene.add(whiteboard);
+        
+        // Company Logo on back wall
+        function createTextTexture(text, bgColor, textColor, fontSize = 48) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 256;
+            const context = canvas.getContext('2d');
+            
+            context.fillStyle = bgColor;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            context.fillStyle = textColor;
+            context.font = `bold ${fontSize}px Arial`;
+            context.textAlign = 'center';
+            context.fillText(text, canvas.width / 2, canvas.height / 2 + fontSize / 4);
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+        
+        const logoTexture = createTextTexture('TECH SOLUTIONS', '#1e3a8a', '#ffffff', 36);
+        const logoMaterial = new THREE.MeshStandardMaterial({ map: logoTexture });
+        const logo = new THREE.Mesh(
+            new THREE.PlaneGeometry(6, 3),
+            logoMaterial
+        );
+        logo.position.set(0, 6, -19.7);
+        scene.add(logo);
+        
+        // Motivational Posters
+        const posterMessages = [
+            { text: 'CODE\nCREATE\nINNOVATE', color: '#e11d48' },
+            { text: 'THINK\nDIFFERENT', color: '#059669' },
+            { text: 'FAIL FAST\nLEARN FASTER', color: '#7c3aed' },
+            { text: 'DEPLOY\nON FRIDAY', color: '#dc2626' }
+        ];
+        
+        // Left wall posters
+        posterMessages.slice(0, 2).forEach((poster, index) => {
+            const posterTexture = createTextTexture(poster.text, '#f8fafc', poster.color, 28);
+            const posterMaterial = new THREE.MeshStandardMaterial({ map: posterTexture });
+            const posterMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(2.5, 3),
+                posterMaterial
+            );
+            posterMesh.position.set(-19.7, 4 + (index * 3), -8 + (index * 8));
+            posterMesh.rotation.y = Math.PI / 2;
+            scene.add(posterMesh);
+        });
+        
+        // Right wall posters
+        posterMessages.slice(2).forEach((poster, index) => {
+            const posterTexture = createTextTexture(poster.text, '#f8fafc', poster.color, 28);
+            const posterMaterial = new THREE.MeshStandardMaterial({ map: posterTexture });
+            const posterMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(2.5, 3),
+                posterMaterial
+            );
+            posterMesh.position.set(19.7, 4 + (index * 3), -8 + (index * 8));
+            posterMesh.rotation.y = -Math.PI / 2;
+            scene.add(posterMesh);
+        });
+        
+        // Digital Screens with Content
+        function createDigitalScreen(x, y, z, rotation = 0) {
+            const screenGroup = new THREE.Group();
+            
+            // Screen frame
+            const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+            const frame = new THREE.Mesh(
+                new THREE.BoxGeometry(3.2, 2.2, 0.1),
+                frameMaterial
+            );
+            screenGroup.add(frame);
+            
+            // Screen content (will animate)
+            const screenCanvas = document.createElement('canvas');
+            screenCanvas.width = 512;
+            screenCanvas.height = 256;
+            const screenContext = screenCanvas.getContext('2d');
+            
+            // Initial screen content
+            function updateScreen() {
+                const now = Date.now();
+                const time = new Date().toLocaleTimeString();
+                
+                screenContext.fillStyle = '#0f172a';
+                screenContext.fillRect(0, 0, 512, 256);
+                
+                screenContext.fillStyle = '#06b6d4';
+                screenContext.font = 'bold 24px Arial';
+                screenContext.textAlign = 'center';
+                screenContext.fillText('SYSTEM STATUS', 256, 40);
+                
+                screenContext.fillStyle = '#10b981';
+                screenContext.font = '18px Arial';
+                screenContext.fillText('✓ All Systems Online', 256, 80);
+                screenContext.fillText('✓ Deployment Ready', 256, 110);
+                screenContext.fillText('✓ Tests Passing', 256, 140);
+                
+                screenContext.fillStyle = '#06b6d4';
+                screenContext.font = '16px Arial';
+                screenContext.fillText(time, 256, 180);
+                
+                screenContext.fillStyle = '#8b5cf6';
+                screenContext.fillText(`Uptime: ${Math.floor(now/1000/60)} min`, 256, 210);
+            }
+            
+            updateScreen();
+            const screenTexture = new THREE.CanvasTexture(screenCanvas);
+            
+            const screen = new THREE.Mesh(
+                new THREE.PlaneGeometry(3, 2),
+                new THREE.MeshStandardMaterial({ 
+                    map: screenTexture,
+                    emissive: 0x111111
+                })
+            );
+            screen.position.z = 0.06;
+            screenGroup.add(screen);
+            
+            // Update screen content periodically
+            setInterval(() => {
+                updateScreen();
+                screenTexture.needsUpdate = true;
+            }, 1000);
+            
+            screenGroup.position.set(x, y, z);
+            screenGroup.rotation.y = rotation;
+            return screenGroup;
+        }
+        
+        // Add digital screens
+        const screen1 = createDigitalScreen(-15, 4, -19.8);
+        const screen2 = createDigitalScreen(15, 4, -19.8);
+        scene.add(screen1, screen2);
+        
+        // Neon accent elements
+        function createNeonSign(text, x, y, z, color) {
+            const neonGroup = new THREE.Group();
+            
+            // Neon tube effect using glowing geometry
+            const neonMaterial = new THREE.MeshStandardMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.8,
+                transparent: true,
+                opacity: 0.9
+            });
+            
+            // Background panel
+            const panel = new THREE.Mesh(
+                new THREE.PlaneGeometry(text.length * 0.5, 1),
+                new THREE.MeshStandardMaterial({ 
+                    color: 0x1a1a1a,
+                    transparent: true,
+                    opacity: 0.8
+                })
+            );
+            neonGroup.add(panel);
+            
+            // Neon text effect (simplified as colored rectangles)
+            for (let i = 0; i < text.length; i++) {
+                const letter = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.3, 0.6),
+                    neonMaterial
+                );
+                letter.position.x = (i - text.length/2) * 0.4;
+                letter.position.z = 0.01;
+                neonGroup.add(letter);
+            }
+            
+            // Glow light
+            const glowLight = new THREE.PointLight(color, 1, 8);
+            glowLight.position.z = 1;
+            neonGroup.add(glowLight);
+            
+            neonGroup.position.set(x, y, z);
+            return neonGroup;
+        }
+        
+        // Add neon signs
+        const neonExit = createNeonSign('EXIT', 18, 7, 0, 0x00ff00);
+        neonExit.rotation.y = -Math.PI / 2;
+        scene.add(neonExit);
+        
+        const neonCafe = createNeonSign('CAFE', -18, 3, 8, 0xff0080);
+        neonCafe.rotation.y = Math.PI / 2;
+        scene.add(neonCafe);
         
         // Roomba
         const roombaGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16);
@@ -981,6 +1225,9 @@
             
             const deltaTime = (currentTime - lastTime) / 1000;
             lastTime = currentTime;
+            
+            // Update lighting animations
+            animateLighting();
             
             // Update player movement
             player.velocity.set(0, 0, 0);
