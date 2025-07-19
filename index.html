@@ -654,40 +654,46 @@
         const screen2 = createDigitalScreen(15, 4, -19.8);
         scene.add(screen1, screen2);
         
-        // Neon accent elements
+        // Neon accent elements with proper text rendering
         function createNeonSign(text, x, y, z, color) {
             const neonGroup = new THREE.Group();
             
-            // Neon tube effect using glowing geometry
-            const neonMaterial = new THREE.MeshStandardMaterial({
-                color: color,
+            // Create text canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 128;
+            const context = canvas.getContext('2d');
+            
+            // Draw background
+            context.fillStyle = '#1a1a1a';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw text
+            context.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
+            context.font = 'bold 60px Arial';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(text, canvas.width / 2, canvas.height / 2);
+            
+            // Add glow effect
+            context.shadowColor = `#${color.toString(16).padStart(6, '0')}`;
+            context.shadowBlur = 20;
+            context.fillText(text, canvas.width / 2, canvas.height / 2);
+            
+            // Create texture and material
+            const texture = new THREE.CanvasTexture(canvas);
+            const signMaterial = new THREE.MeshStandardMaterial({
+                map: texture,
                 emissive: color,
-                emissiveIntensity: 0.8,
+                emissiveIntensity: 0.3,
                 transparent: true,
                 opacity: 0.9
             });
             
-            // Background panel
-            const panel = new THREE.Mesh(
-                new THREE.PlaneGeometry(text.length * 0.5, 1),
-                new THREE.MeshStandardMaterial({ 
-                    color: 0x1a1a1a,
-                    transparent: true,
-                    opacity: 0.8
-                })
-            );
-            neonGroup.add(panel);
-            
-            // Neon text effect (simplified as colored rectangles)
-            for (let i = 0; i < text.length; i++) {
-                const letter = new THREE.Mesh(
-                    new THREE.PlaneGeometry(0.3, 0.6),
-                    neonMaterial
-                );
-                letter.position.x = (i - text.length/2) * 0.4;
-                letter.position.z = 0.01;
-                neonGroup.add(letter);
-            }
+            // Create sign geometry
+            const signGeometry = new THREE.PlaneGeometry(text.length * 0.8, 1.2);
+            const signMesh = new THREE.Mesh(signGeometry, signMaterial);
+            neonGroup.add(signMesh);
             
             // Glow light
             const glowLight = new THREE.PointLight(color, 1, 8);
@@ -719,33 +725,64 @@
         const corridorWidth = 6;
         const corridorHeight = 10;
         
-        // Create proper corridor entrance - modify right wall
-        // Split right wall into two sections with doorway
-        const rightWallTop = new THREE.Mesh(
-            new THREE.PlaneGeometry(40, 2),
+        // Create proper corridor entrance with actual opening
+        // Split right wall into sections around doorway
+        const doorwayWidth = 3;
+        const doorwayHeight = 8;
+        
+        // Right wall - left section (from z=-20 to doorway start)
+        const rightWallLeft = new THREE.Mesh(
+            new THREE.PlaneGeometry(20 - doorwayWidth/2, 10),
             wallMaterial
         );
-        rightWallTop.position.set(20, 9, 0);
+        rightWallLeft.position.set(20, 5, -(10 + doorwayWidth/4));
+        rightWallLeft.rotation.y = -Math.PI / 2;
+        rightWallLeft.receiveShadow = true;
+        scene.add(rightWallLeft);
+        
+        // Right wall - right section (from doorway end to z=20)
+        const rightWallRight = new THREE.Mesh(
+            new THREE.PlaneGeometry(20 - doorwayWidth/2, 10),
+            wallMaterial
+        );
+        rightWallRight.position.set(20, 5, 10 + doorwayWidth/4);
+        rightWallRight.rotation.y = -Math.PI / 2;
+        rightWallRight.receiveShadow = true;
+        scene.add(rightWallRight);
+        
+        // Right wall - top section above doorway
+        const rightWallTop = new THREE.Mesh(
+            new THREE.PlaneGeometry(doorwayWidth, 10 - doorwayHeight),
+            wallMaterial
+        );
+        rightWallTop.position.set(20, 5 + doorwayHeight/2 + (10 - doorwayHeight)/2, 0);
         rightWallTop.rotation.y = -Math.PI / 2;
         rightWallTop.receiveShadow = true;
         scene.add(rightWallTop);
         
-        const rightWallBottom = new THREE.Mesh(
-            new THREE.PlaneGeometry(40, 3),
-            wallMaterial
+        // Doorway frame - left post
+        const leftPost = new THREE.Mesh(
+            new THREE.BoxGeometry(0.3, doorwayHeight, 0.3),
+            new THREE.MeshStandardMaterial({ color: 0x8b4513 })
         );
-        rightWallBottom.position.set(20, 1.5, 0);
-        rightWallBottom.rotation.y = -Math.PI / 2;
-        rightWallBottom.receiveShadow = true;
-        scene.add(rightWallBottom);
+        leftPost.position.set(19.85, doorwayHeight/2, -doorwayWidth/2);
+        scene.add(leftPost);
         
-        // Corridor entrance frame
-        const entranceFrame = new THREE.Mesh(
-            new THREE.BoxGeometry(0.2, corridorHeight, corridorWidth + 0.4),
-            new THREE.MeshStandardMaterial({ color: 0x654321 })
+        // Doorway frame - right post
+        const rightPost = new THREE.Mesh(
+            new THREE.BoxGeometry(0.3, doorwayHeight, 0.3),
+            new THREE.MeshStandardMaterial({ color: 0x8b4513 })
         );
-        entranceFrame.position.set(20, 5, 0);
-        scene.add(entranceFrame);
+        rightPost.position.set(19.85, doorwayHeight/2, doorwayWidth/2);
+        scene.add(rightPost);
+        
+        // Doorway frame - top beam
+        const topBeam = new THREE.Mesh(
+            new THREE.BoxGeometry(0.3, 0.3, doorwayWidth),
+            new THREE.MeshStandardMaterial({ color: 0x8b4513 })
+        );
+        topBeam.position.set(19.85, doorwayHeight, 0);
+        scene.add(topBeam);
         
         // Corridor floor
         const corridorFloor = new THREE.Mesh(
