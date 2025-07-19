@@ -1372,8 +1372,12 @@
                 createFloatingText('Smack!', ball.position);
             }
             
-            // Player interaction - kick the ball with proper collision detection!
-            const playerBallDistance = player.position.distanceTo(ball.position);
+            // Player interaction - kick the ball with proper 2D collision detection!
+            // Use 2D distance (ignore Y axis) since player is tall and ball is on ground
+            const playerPos2D = new THREE.Vector2(player.position.x, player.position.z);
+            const ballPos2D = new THREE.Vector2(ball.position.x, ball.position.z);
+            const playerBallDistance2D = playerPos2D.distanceTo(ballPos2D);
+            
             const playerRadius = 0.5; // Player collision radius
             const combinedRadius = playerRadius + ballData.radius;
             
@@ -1382,8 +1386,8 @@
                 ballData.kickCooldown -= deltaTime;
             }
             
-            // Check for collision (not just proximity)
-            const isColliding = playerBallDistance <= combinedRadius;
+            // Check for 2D collision (ignore height difference)
+            const isColliding = playerBallDistance2D <= combinedRadius;
             
             if (isColliding && ballData.kickCooldown <= 0) {
                 // Calculate kick direction from player center to ball center
@@ -1409,6 +1413,9 @@
                     
                     // Visual feedback
                     createFloatingText('KICK!', ball.position);
+                    
+                    // Debug output to console
+                    console.log(`🦶 KICK! Distance: ${playerBallDistance2D.toFixed(2)}, Strength: ${totalKickStrength.toFixed(2)}`);
                     
                     // Add screen shake effect for impact feeling
                     if (totalKickStrength > 0.6) {

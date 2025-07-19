@@ -16,7 +16,8 @@
       "WebFetch(domain:3d-office-simulator-ko8sbh147-captains-projects-493e7ead.vercel.app)",
       "Bash(cat:*)",
       "Bash(git checkout:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(python:*)"
     ],
     "deny": []
   }
