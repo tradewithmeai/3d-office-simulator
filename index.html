@@ -361,14 +361,7 @@
         leftWall.receiveShadow = true;
         scene.add(leftWall);
         
-        const rightWall = new THREE.Mesh(
-            new THREE.PlaneGeometry(40, 10),
-            wallMaterial
-        );
-        rightWall.position.set(20, 5, 0);
-        rightWall.rotation.y = -Math.PI / 2;
-        rightWall.receiveShadow = true;
-        scene.add(rightWall);
+        // Right wall removed - will be replaced with split sections in corridor code
         
         // Office furniture materials
         const woodMaterial = new THREE.MeshStandardMaterial({ 
@@ -705,46 +698,54 @@
             return neonGroup;
         }
         
-        // Add neon signs - Testing different wall placement
-        // EXIT sign moved to BACK WALL for testing (z=-20)
-        const neonExit = createNeonSign('EXIT', 5, 6, -19.5, 0x00ff00);
+        // Add neon signs - FIXED positioning
+        // EXIT sign on back wall - highly visible position
+        const neonExit = createNeonSign('EXIT', 0, 6, -19.5, 0x00ff00);
         neonExit.rotation.y = 0; // Face forward toward room center
         scene.add(neonExit);
         
-        // CAFE sign on left wall (x=-20), visible from inside room  
-        const neonCafe = createNeonSign('CAFE', -18, 4, 8, 0xff0080);
+        // CAFE sign on left wall - proper positioning
+        const neonCafe = createNeonSign('CAFE', -19.5, 4, 0, 0xff0080);
         neonCafe.rotation.y = Math.PI / 2; // Face inward toward room center
         scene.add(neonCafe);
         
-        // Add DEBUG MARKER on right wall to test wall visibility
-        const debugMarker = new THREE.Mesh(
-            new THREE.SphereGeometry(0.5, 8, 8),
-            new THREE.MeshStandardMaterial({ 
-                color: 0xff00ff, 
-                emissive: 0xff00ff,
-                emissiveIntensity: 0.5
-            })
-        );
-        debugMarker.position.set(19.5, 5, 0); // Right wall position
-        scene.add(debugMarker);
+        // CORRIDOR sign on right wall - marks corridor entrance
+        const neonCorridor = createNeonSign('CORRIDOR', 19.5, 6, 0, 0xffff00);
+        neonCorridor.rotation.y = -Math.PI / 2; // Face inward toward room center
+        scene.add(neonCorridor);
         
         // Long Corridor Extension
         const corridorLength = 60; // Very long corridor
         const corridorWidth = 6;
         const corridorHeight = 10;
         
-        // Create corridor opening in the right wall
-        const corridorOpening = new THREE.Mesh(
-            new THREE.PlaneGeometry(corridorWidth, corridorHeight),
-            new THREE.MeshStandardMaterial({ 
-                color: 0x2a2a2a, // Darker to show depth
-                transparent: true,
-                opacity: 0.1
-            })
+        // Create proper corridor entrance - modify right wall
+        // Split right wall into two sections with doorway
+        const rightWallTop = new THREE.Mesh(
+            new THREE.PlaneGeometry(40, 2),
+            wallMaterial
         );
-        corridorOpening.position.set(20, 5, 0);
-        corridorOpening.rotation.y = -Math.PI / 2;
-        scene.add(corridorOpening);
+        rightWallTop.position.set(20, 9, 0);
+        rightWallTop.rotation.y = -Math.PI / 2;
+        rightWallTop.receiveShadow = true;
+        scene.add(rightWallTop);
+        
+        const rightWallBottom = new THREE.Mesh(
+            new THREE.PlaneGeometry(40, 3),
+            wallMaterial
+        );
+        rightWallBottom.position.set(20, 1.5, 0);
+        rightWallBottom.rotation.y = -Math.PI / 2;
+        rightWallBottom.receiveShadow = true;
+        scene.add(rightWallBottom);
+        
+        // Corridor entrance frame
+        const entranceFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, corridorHeight, corridorWidth + 0.4),
+            new THREE.MeshStandardMaterial({ color: 0x654321 })
+        );
+        entranceFrame.position.set(20, 5, 0);
+        scene.add(entranceFrame);
         
         // Corridor floor
         const corridorFloor = new THREE.Mesh(
