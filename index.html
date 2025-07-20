@@ -417,6 +417,15 @@
         
         // Create gallery frames on front wall
         console.log('Creating simple gallery on front wall...');
+        console.log('Available artworks:', artworks);
+        
+        // Test image accessibility
+        artworks.forEach((artwork, index) => {
+            const testImg = new Image();
+            testImg.onload = () => console.log(`✅ Image accessible: ${artwork.title}`);
+            testImg.onerror = () => console.log(`❌ Image NOT accessible: ${artwork.title} at ${artwork.image}`);
+            testImg.src = artwork.image;
+        });
         artworks.forEach((artwork, index) => {
             const frameGroup = new THREE.Group();
             
@@ -459,17 +468,35 @@
                 artwork.image, 
                 (texture) => {
                     console.log(`✅ Successfully loaded ${artwork.title}!`);
+                    console.log(`📐 Original texture size: ${texture.image.width}x${texture.image.height}`);
+                    
+                    // Check WebGL texture size limits
+                    const maxSize = renderer.capabilities.maxTextureSize;
+                    console.log(`🔧 WebGL max texture size: ${maxSize}`);
+                    
+                    // WebGL texture configuration
                     texture.flipY = false;
                     texture.wrapS = THREE.ClampToEdgeWrapping;
                     texture.wrapT = THREE.ClampToEdgeWrapping;
+                    texture.minFilter = THREE.LinearFilter;
+                    texture.magFilter = THREE.LinearFilter;
+                    texture.generateMipmaps = false;
+                    
+                    // Force texture update
+                    texture.needsUpdate = true;
                     
                     // Replace the material with the loaded texture
-                    art.material = new THREE.MeshStandardMaterial({ 
+                    const newMaterial = new THREE.MeshStandardMaterial({ 
                         map: texture,
                         roughness: 0.3,
                         metalness: 0.1
                     });
+                    
+                    art.material.dispose(); // Clean up old material
+                    art.material = newMaterial;
+                    
                     console.log(`🖼️ ${artwork.title} texture applied successfully!`);
+                    console.log(`🎯 Material updated:`, art.material);
                 }, 
                 (progress) => {
                     if (progress.total > 0) {
@@ -492,6 +519,8 @@
                 5, // Y: eye level
                 19.8 // Z: on front wall (slightly inset)
             );
+            
+            console.log(`Gallery frame ${index + 1} created: ${artwork.title} at X: ${startX + (index * spacing)}`);
             
             // Add simple gallery lighting
             const spotlight = new THREE.SpotLight(0xffffff, 0.8, 10, Math.PI / 8, 0.3);
