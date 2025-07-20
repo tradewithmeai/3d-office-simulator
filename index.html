@@ -395,9 +395,21 @@
         
         // Gallery configuration - your 3 artworks
         const artworks = [
-            { title: "Frame Escape", color: 0x4f46e5, frame: 0x2d3748 },      // Purple art, dark frame
-            { title: "Digital Gallery", color: 0x059669, frame: 0x8b4513 },   // Green art, brown frame  
-            { title: "AI Head", color: 0xdc2626, frame: 0xffffff }            // Red art, white frame
+            { 
+                title: "Escher Vision", 
+                image: "images/gallery/A_highly_detailed,_Escher-inspired_painting_depict.jpg",
+                frame: 0x2d3748 
+            },
+            { 
+                title: "Renaissance Drawing", 
+                image: "images/gallery/A_highly_detailed,_Renaissance-style_ink_drawing_o.jpg",
+                frame: 0x8b4513 
+            },
+            { 
+                title: "Realistic Oil", 
+                image: "images/gallery/A_imaginative,_realistic-style_oil_painting_depict.jpg",
+                frame: 0xffffff 
+            }
         ];
         
         // Create gallery frames on front wall
@@ -423,18 +435,35 @@
             );
             frameGroup.add(frame);
             
-            // Artwork (simple colored rectangle - no texture!)
-            const artMaterial = new THREE.MeshStandardMaterial({ 
-                color: artwork.color,
-                roughness: 0.3,
-                metalness: 0.1
+            // Artwork (load actual image)
+            const loader = new THREE.TextureLoader();
+            loader.load(artwork.image, (texture) => {
+                const artMaterial = new THREE.MeshStandardMaterial({ 
+                    map: texture,
+                    roughness: 0.3,
+                    metalness: 0.1
+                });
+                const art = new THREE.Mesh(
+                    new THREE.PlaneGeometry(frameWidth - (frameBorder * 2), frameHeight - (frameBorder * 2)),
+                    artMaterial
+                );
+                art.position.z = frameDepth / 2 + 0.01;
+                frameGroup.add(art);
+            }, undefined, (error) => {
+                console.warn(`Failed to load ${artwork.title}:`, error);
+                // Fallback to colored rectangle if image fails
+                const fallbackMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x666666,
+                    roughness: 0.3,
+                    metalness: 0.1
+                });
+                const art = new THREE.Mesh(
+                    new THREE.PlaneGeometry(frameWidth - (frameBorder * 2), frameHeight - (frameBorder * 2)),
+                    fallbackMaterial
+                );
+                art.position.z = frameDepth / 2 + 0.01;
+                frameGroup.add(art);
             });
-            const art = new THREE.Mesh(
-                new THREE.PlaneGeometry(frameWidth - (frameBorder * 2), frameHeight - (frameBorder * 2)),
-                artMaterial
-            );
-            art.position.z = frameDepth / 2 + 0.01;
-            frameGroup.add(art);
             
             // Position frames horizontally across front wall
             const spacing = 4;
