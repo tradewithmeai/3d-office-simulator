@@ -693,6 +693,153 @@
             scene.add(posterMesh);
         });
         
+        // ========================================================================
+        // ART GALLERY SYSTEM
+        // Professional gallery wall for displaying user artwork
+        // ========================================================================
+        
+        // Gallery configuration
+        const galleryConfig = {
+            artworks: [
+                {
+                    title: "Frame Escape",
+                    url: "./images/gallery/frame-escape.png",
+                    frameStyle: "modern"
+                },
+                {
+                    title: "Digital Gallery", 
+                    url: "./images/gallery/digital-gallery.png",
+                    frameStyle: "classic"
+                },
+                {
+                    title: "AI Head",
+                    url: "./images/gallery/ai-head.png",
+                    frameStyle: "minimalist"
+                }
+            ]
+        };
+        
+        // Create picture frame function
+        function createPictureFrame(artwork, frameStyle = "modern") {
+            const group = new THREE.Group();
+            
+            // Frame dimensions
+            const frameWidth = 3;
+            const frameHeight = 2.5;
+            const frameDepth = 0.1;
+            const frameBorder = 0.15;
+            
+            // Frame materials based on style
+            const frameMaterials = {
+                modern: new THREE.MeshStandardMaterial({ 
+                    color: 0x2d3748, 
+                    metalness: 0.3, 
+                    roughness: 0.4 
+                }),
+                classic: new THREE.MeshStandardMaterial({ 
+                    color: 0x8b4513, 
+                    metalness: 0.1, 
+                    roughness: 0.8 
+                }),
+                minimalist: new THREE.MeshStandardMaterial({ 
+                    color: 0xffffff, 
+                    metalness: 0.0, 
+                    roughness: 0.9 
+                })
+            };
+            
+            // Create frame border
+            const frameGeometry = new THREE.BoxGeometry(frameWidth, frameHeight, frameDepth);
+            const frameMesh = new THREE.Mesh(frameGeometry, frameMaterials[frameStyle] || frameMaterials.modern);
+            group.add(frameMesh);
+            
+            // Create artwork plane (slightly inset)
+            const artworkGeometry = new THREE.PlaneGeometry(
+                frameWidth - (frameBorder * 2), 
+                frameHeight - (frameBorder * 2)
+            );
+            
+            // Load artwork texture
+            const loader = new THREE.TextureLoader();
+            const artworkMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xffffff,
+                map: null // Will be set when texture loads
+            });
+            
+            // Create placeholder while loading
+            const placeholderTexture = createTextTexture(artwork.title, '#f7fafc', '#2d3748', 24);
+            artworkMaterial.map = placeholderTexture;
+            
+            const artworkMesh = new THREE.Mesh(artworkGeometry, artworkMaterial);
+            artworkMesh.position.z = frameDepth / 2 + 0.01; // Slightly in front of frame
+            group.add(artworkMesh);
+            
+            // Load actual artwork (async)
+            loader.load(
+                artwork.url,
+                function(texture) {
+                    // Success - replace placeholder with artwork
+                    artworkMaterial.map = texture;
+                    artworkMaterial.needsUpdate = true;
+                },
+                function(progress) {
+                    // Loading progress (optional)
+                },
+                function(error) {
+                    // Error - keep placeholder
+                    console.log('Failed to load artwork:', artwork.url);
+                }
+            );
+            
+            // Add subtle shadow plane behind frame
+            const shadowGeometry = new THREE.PlaneGeometry(frameWidth + 0.2, frameHeight + 0.2);
+            const shadowMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x000000, 
+                transparent: true, 
+                opacity: 0.3 
+            });
+            const shadowMesh = new THREE.Mesh(shadowGeometry, shadowMaterial);
+            shadowMesh.position.z = -frameDepth / 2 - 0.05;
+            group.add(shadowMesh);
+            
+            return group;
+        }
+        
+        // Create gallery wall on back wall
+        galleryConfig.artworks.forEach((artwork, index) => {
+            const frame = createPictureFrame(artwork, artwork.frameStyle);
+            
+            // Position frames horizontally across back wall
+            const spacing = 6; // Space between frames
+            const startX = -(galleryConfig.artworks.length - 1) * spacing / 2;
+            
+            frame.position.set(
+                startX + (index * spacing), // X: spread horizontally
+                6, // Y: eye level height
+                -19.8 // Z: on back wall (slightly in front)
+            );
+            
+            scene.add(frame);
+        });
+        
+        // Add gallery spotlights
+        galleryConfig.artworks.forEach((artwork, index) => {
+            const spacing = 6;
+            const startX = -(galleryConfig.artworks.length - 1) * spacing / 2;
+            const artworkX = startX + (index * spacing);
+            
+            // Create spotlight for each artwork
+            const spotlight = new THREE.SpotLight(0xffffff, 1.5, 15, Math.PI / 6, 0.5);
+            spotlight.position.set(artworkX, 8, -17); // Above and in front of artwork
+            spotlight.target.position.set(artworkX, 6, -19.8); // Point at artwork
+            spotlight.castShadow = true;
+            spotlight.shadow.mapSize.width = 1024;
+            spotlight.shadow.mapSize.height = 1024;
+            
+            scene.add(spotlight);
+            scene.add(spotlight.target);
+        });
+        
         // Digital Screens with Content
         function createDigitalScreen(x, y, z, rotation = 0) {
             const screenGroup = new THREE.Group();
