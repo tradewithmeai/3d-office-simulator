@@ -397,17 +397,20 @@
         const artworks = [
             { 
                 title: "Escher Vision", 
-                image: "images/gallery/A_highly_detailed,_Escher-inspired_painting_depict.jpg",
+                image: "./images/gallery/A_highly_detailed,_Escher-inspired_painting_depict.jpg",
+                fallbackColor: 0x4f46e5,
                 frame: 0x2d3748 
             },
             { 
                 title: "Renaissance Drawing", 
-                image: "images/gallery/A_highly_detailed,_Renaissance-style_ink_drawing_o.jpg",
+                image: "./images/gallery/A_highly_detailed,_Renaissance-style_ink_drawing_o.jpg",
+                fallbackColor: 0x059669,
                 frame: 0x8b4513 
             },
             { 
                 title: "Realistic Oil", 
-                image: "images/gallery/A_imaginative,_realistic-style_oil_painting_depict.jpg",
+                image: "./images/gallery/A_imaginative,_realistic-style_oil_painting_depict.jpg",
+                fallbackColor: 0xdc2626,
                 frame: 0xffffff 
             }
         ];
@@ -435,35 +438,50 @@
             );
             frameGroup.add(frame);
             
-            // Artwork (load actual image)
-            const loader = new THREE.TextureLoader();
-            loader.load(artwork.image, (texture) => {
-                const artMaterial = new THREE.MeshStandardMaterial({ 
-                    map: texture,
-                    roughness: 0.3,
-                    metalness: 0.1
-                });
-                const art = new THREE.Mesh(
-                    new THREE.PlaneGeometry(frameWidth - (frameBorder * 2), frameHeight - (frameBorder * 2)),
-                    artMaterial
-                );
-                art.position.z = frameDepth / 2 + 0.01;
-                frameGroup.add(art);
-            }, undefined, (error) => {
-                console.warn(`Failed to load ${artwork.title}:`, error);
-                // Fallback to colored rectangle if image fails
-                const fallbackMaterial = new THREE.MeshStandardMaterial({ 
-                    color: 0x666666,
-                    roughness: 0.3,
-                    metalness: 0.1
-                });
-                const art = new THREE.Mesh(
-                    new THREE.PlaneGeometry(frameWidth - (frameBorder * 2), frameHeight - (frameBorder * 2)),
-                    fallbackMaterial
-                );
-                art.position.z = frameDepth / 2 + 0.01;
-                frameGroup.add(art);
+            // Create immediate fallback artwork (shows instantly)
+            const initialMaterial = new THREE.MeshStandardMaterial({ 
+                color: artwork.fallbackColor,
+                roughness: 0.3,
+                metalness: 0.1
             });
+            const art = new THREE.Mesh(
+                new THREE.PlaneGeometry(frameWidth - (frameBorder * 2), frameHeight - (frameBorder * 2)),
+                initialMaterial
+            );
+            art.position.z = frameDepth / 2 + 0.01;
+            frameGroup.add(art);
+            
+            // Attempt to load actual image (will replace fallback if successful)
+            console.log(`🎨 Loading artwork: ${artwork.title} from ${artwork.image}`);
+            
+            const loader = new THREE.TextureLoader();
+            loader.load(
+                artwork.image, 
+                (texture) => {
+                    console.log(`✅ Successfully loaded ${artwork.title}!`);
+                    texture.flipY = false;
+                    texture.wrapS = THREE.ClampToEdgeWrapping;
+                    texture.wrapT = THREE.ClampToEdgeWrapping;
+                    
+                    // Replace the material with the loaded texture
+                    art.material = new THREE.MeshStandardMaterial({ 
+                        map: texture,
+                        roughness: 0.3,
+                        metalness: 0.1
+                    });
+                    console.log(`🖼️ ${artwork.title} texture applied successfully!`);
+                }, 
+                (progress) => {
+                    if (progress.total > 0) {
+                        console.log(`📥 Loading ${artwork.title}: ${Math.round((progress.loaded / progress.total) * 100)}%`);
+                    }
+                },
+                (error) => {
+                    console.error(`❌ Failed to load ${artwork.title}:`, error);
+                    console.log(`🔄 Keeping fallback color for ${artwork.title}`);
+                    // Art already has fallback color, so nothing more to do
+                }
+            );
             
             // Position frames horizontally across front wall
             const spacing = 4;
