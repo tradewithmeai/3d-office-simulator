@@ -143,7 +143,7 @@ gh repo view --web                    # Open GitHub repo
 - **3D Graphics:** WebGL via Three.js
 - **Deployment:** Vercel static hosting
 - **Version Control:** GitHub with automatic deployments
-- **Development:** Claude Code CLI for rapid iteration
+- **Development:** Modern CLI tools for rapid iteration
 
 ### Optimization Opportunities
 - **Asset loading:** Implement texture compression for faster loading
