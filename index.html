@@ -449,13 +449,9 @@
             
             // Create immediate fallback artwork (shows instantly) - BRIGHT color for testing
             const testColors = [0xff0000, 0x00ff00, 0x0000ff]; // Red, Green, Blue - highly visible
-            const initialMaterial = new THREE.MeshStandardMaterial({ 
+            const initialMaterial = new THREE.MeshBasicMaterial({ 
                 color: testColors[index] || artwork.fallbackColor,
-                roughness: 0.1,
-                metalness: 0.0,
-                side: THREE.DoubleSide,
-                transparent: false,
-                opacity: 1.0
+                side: THREE.DoubleSide
             });
             const art = new THREE.Mesh(
                 new THREE.PlaneGeometry(frameWidth - (frameBorder * 2), frameHeight - (frameBorder * 2)),
@@ -513,18 +509,9 @@
                     // Force texture update
                     texture.needsUpdate = true;
                     
-                    // Replace the material with the loaded texture
-                    const newMaterial = new THREE.MeshStandardMaterial({ 
-                        map: texture,
-                        roughness: 0.1,  // Less rough for better image visibility
-                        metalness: 0.0,  // No metalness for cleaner image display
-                        side: THREE.DoubleSide,  // Ensure both sides are visible
-                        transparent: false,
-                        opacity: 1.0
-                    });
-                    
-                    art.material.dispose(); // Clean up old material
-                    art.material = newMaterial;
+                    // KEEP the bright test color - don't replace material yet
+                    console.log(`🚫 SKIPPING material replacement to test if this is the issue`);
+                    console.log(`🎨 Texture loaded but keeping bright ${index === 0 ? 'RED' : index === 1 ? 'GREEN' : 'BLUE'} color for debugging`);
                     
                     // Force geometry and material update
                     art.geometry.computeBoundingBox();
@@ -559,8 +546,6 @@
                 5, // Y: eye level
                 19.8 // Z: on front wall (slightly inset)
             );
-            
-            console.log(`Gallery frame ${index + 1} created: ${artwork.title} at X: ${startX + (index * spacing)}`);
             
             // Add simple gallery lighting
             const spotlight = new THREE.SpotLight(0xffffff, 0.8, 10, Math.PI / 8, 0.3);
