@@ -447,18 +447,25 @@
             );
             frameGroup.add(frame);
             
-            // Create immediate fallback artwork (shows instantly)
+            // Create immediate fallback artwork (shows instantly) - BRIGHT color for testing
+            const testColors = [0xff0000, 0x00ff00, 0x0000ff]; // Red, Green, Blue - highly visible
             const initialMaterial = new THREE.MeshStandardMaterial({ 
-                color: artwork.fallbackColor,
-                roughness: 0.3,
-                metalness: 0.1
+                color: testColors[index] || artwork.fallbackColor,
+                roughness: 0.1,
+                metalness: 0.0,
+                side: THREE.DoubleSide,
+                transparent: false,
+                opacity: 1.0
             });
             const art = new THREE.Mesh(
                 new THREE.PlaneGeometry(frameWidth - (frameBorder * 2), frameHeight - (frameBorder * 2)),
                 initialMaterial
             );
-            art.position.z = frameDepth / 2 + 0.01;
+            art.position.set(0, 0, frameDepth / 2 + 0.05); // More forward to ensure visibility
             frameGroup.add(art);
+            
+            console.log(`🖼️ Created artwork plane for ${artwork.title} at position:`, art.position);
+            console.log(`🎨 Initial material color: 0x${testColors[index].toString(16)} (should be ${index === 0 ? 'RED' : index === 1 ? 'GREEN' : 'BLUE'})`);
             
             // Attempt to load actual image (will replace fallback if successful)
             console.log(`🎨 Loading artwork: ${artwork.title} from ${artwork.image}`);
@@ -470,9 +477,19 @@
                     console.log(`✅ Successfully loaded ${artwork.title}!`);
                     console.log(`📐 Original texture size: ${texture.image.width}x${texture.image.height}`);
                     
-                    // Check WebGL texture size limits
+                    // Check WebGL texture size limits and capabilities
                     const maxSize = renderer.capabilities.maxTextureSize;
+                    const maxTextures = renderer.capabilities.maxTextures;
+                    const maxTextureImageUnits = renderer.capabilities.maxTextureImageUnits;
                     console.log(`🔧 WebGL max texture size: ${maxSize}`);
+                    console.log(`🔧 WebGL max textures: ${maxTextures}`);
+                    console.log(`🔧 WebGL max texture image units: ${maxTextureImageUnits}`);
+                    
+                    // Check if image dimensions are power of 2 (important for WebGL)
+                    const isPowerOf2 = (value) => (value & (value - 1)) === 0;
+                    const widthPow2 = isPowerOf2(texture.image.width);
+                    const heightPow2 = isPowerOf2(texture.image.height);
+                    console.log(`🔧 Texture power of 2? Width: ${widthPow2}, Height: ${heightPow2}`);
                     
                     // WebGL texture configuration
                     texture.flipY = false;
@@ -488,12 +505,24 @@
                     // Replace the material with the loaded texture
                     const newMaterial = new THREE.MeshStandardMaterial({ 
                         map: texture,
-                        roughness: 0.3,
-                        metalness: 0.1
+                        roughness: 0.1,  // Less rough for better image visibility
+                        metalness: 0.0,  // No metalness for cleaner image display
+                        side: THREE.DoubleSide,  // Ensure both sides are visible
+                        transparent: false,
+                        opacity: 1.0
                     });
                     
                     art.material.dispose(); // Clean up old material
                     art.material = newMaterial;
+                    
+                    // Force geometry and material update
+                    art.geometry.computeBoundingBox();
+                    art.material.needsUpdate = true;
+                    art.geometry.uvsNeedUpdate = true;
+                    
+                    // Check if material is properly assigned
+                    console.log(`🔍 Material check - has map: ${!!newMaterial.map}, texture loaded: ${!!texture.image}`);
+                    console.log(`🔍 Geometry check - UV coordinates:`, art.geometry.attributes.uv);
                     
                     console.log(`🖼️ ${artwork.title} texture applied successfully!`);
                     console.log(`🎯 Material updated:`, art.material);
