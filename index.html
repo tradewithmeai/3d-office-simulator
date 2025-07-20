@@ -465,7 +465,7 @@
             frameGroup.add(art);
             
             console.log(`🖼️ Created artwork plane for ${artwork.title} at position:`, art.position);
-            console.log(`🎨 Initial material color: 0x${testColors[index].toString(16)} (should be ${index === 0 ? 'RED' : index === 1 ? 'GREEN' : 'BLUE'})`);
+            console.log(`🎨 Initial material color: 0x${testColors[index].toString(16).padStart(6, '0')} (should be ${index === 0 ? 'RED' : index === 1 ? 'GREEN' : 'BLUE'})`);
             
             // Attempt to load actual image (will replace fallback if successful)
             console.log(`🎨 Loading artwork: ${artwork.title} from ${artwork.image}`);
@@ -491,13 +491,24 @@
                     const heightPow2 = isPowerOf2(texture.image.height);
                     console.log(`🔧 Texture power of 2? Width: ${widthPow2}, Height: ${heightPow2}`);
                     
-                    // WebGL texture configuration
+                    // WebGL texture configuration for non-power-of-2 textures
                     texture.flipY = false;
                     texture.wrapS = THREE.ClampToEdgeWrapping;
                     texture.wrapT = THREE.ClampToEdgeWrapping;
-                    texture.minFilter = THREE.LinearFilter;
-                    texture.magFilter = THREE.LinearFilter;
-                    texture.generateMipmaps = false;
+                    
+                    // Critical: For non-power-of-2 textures, must use specific filters
+                    if (!widthPow2 || !heightPow2) {
+                        console.log(`🔧 Non-power-of-2 texture detected, using compatible settings`);
+                        texture.minFilter = THREE.LinearFilter;  // Cannot use mipmaps
+                        texture.magFilter = THREE.LinearFilter;
+                        texture.generateMipmaps = false;
+                        texture.wrapS = THREE.ClampToEdgeWrapping;
+                        texture.wrapT = THREE.ClampToEdgeWrapping;
+                    } else {
+                        texture.minFilter = THREE.LinearMipmapLinearFilter;
+                        texture.magFilter = THREE.LinearFilter;
+                        texture.generateMipmaps = true;
+                    }
                     
                     // Force texture update
                     texture.needsUpdate = true;
