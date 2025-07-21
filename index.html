@@ -389,8 +389,7 @@
         console.log('Front wall created and added to scene at:', frontWall.position);
         
         // ========================================================================
-        // SIMPLE ART GALLERY - Front Wall
-        // No textures to avoid WebGL limits - just colored geometry
+        // ART GALLERY - Back Wall (where you can actually see it!)
         // ========================================================================
         
         // Gallery configuration - your 3 artworks
@@ -447,21 +446,20 @@
             );
             frameGroup.add(frame);
             
-            // Create immediate fallback artwork (shows instantly) - BRIGHT color for testing
-            const testColors = [0xff0000, 0x00ff00, 0x0000ff]; // Red, Green, Blue - highly visible
-            const initialMaterial = new THREE.MeshBasicMaterial({ 
-                color: testColors[index] || artwork.fallbackColor,
+            // Create immediate fallback artwork (shows instantly)
+            const initialMaterial = new THREE.MeshStandardMaterial({ 
+                color: artwork.fallbackColor,
+                roughness: 0.3,
+                metalness: 0.1,
                 side: THREE.DoubleSide
             });
+            
             const art = new THREE.Mesh(
                 new THREE.PlaneGeometry(frameWidth - (frameBorder * 2), frameHeight - (frameBorder * 2)),
                 initialMaterial
             );
-            art.position.set(0, 0, frameDepth / 2 + 0.05); // More forward to ensure visibility
+            art.position.set(0, 0, frameDepth / 2 + 0.05);
             frameGroup.add(art);
-            
-            console.log(`🖼️ Created artwork plane for ${artwork.title} at position:`, art.position);
-            console.log(`🎨 Initial material color: 0x${testColors[index].toString(16).padStart(6, '0')} (should be ${index === 0 ? 'RED' : index === 1 ? 'GREEN' : 'BLUE'})`);
             
             // Attempt to load actual image (will replace fallback if successful)
             console.log(`🎨 Loading artwork: ${artwork.title} from ${artwork.image}`);
@@ -488,7 +486,7 @@
                     console.log(`🔧 Texture power of 2? Width: ${widthPow2}, Height: ${heightPow2}`);
                     
                     // WebGL texture configuration for non-power-of-2 textures
-                    texture.flipY = false;
+                    texture.flipY = true;  // Fix upside down images
                     texture.wrapS = THREE.ClampToEdgeWrapping;
                     texture.wrapT = THREE.ClampToEdgeWrapping;
                     
@@ -509,21 +507,25 @@
                     // Force texture update
                     texture.needsUpdate = true;
                     
-                    // KEEP the bright test color - don't replace material yet
-                    console.log(`🚫 SKIPPING material replacement to test if this is the issue`);
-                    console.log(`🎨 Texture loaded but keeping bright ${index === 0 ? 'RED' : index === 1 ? 'GREEN' : 'BLUE'} color for debugging`);
+                    // Replace the material with the loaded texture (now that positioning is fixed!)
+                    const newMaterial = new THREE.MeshStandardMaterial({ 
+                        map: texture,
+                        roughness: 0.1,
+                        metalness: 0.0,
+                        side: THREE.DoubleSide
+                    });
+                    
+                    art.material.dispose();
+                    art.material = newMaterial;
+                    
+                    console.log(`🖼️ ${artwork.title} texture applied successfully!`);
                     
                     // Force geometry and material update
                     art.geometry.computeBoundingBox();
                     art.material.needsUpdate = true;
                     art.geometry.uvsNeedUpdate = true;
                     
-                    // Check if material is properly assigned
-                    console.log(`🔍 Material check - has map: ${!!newMaterial.map}, texture loaded: ${!!texture.image}`);
-                    console.log(`🔍 Geometry check - UV coordinates:`, art.geometry.attributes.uv);
-                    
-                    console.log(`🖼️ ${artwork.title} texture applied successfully!`);
-                    console.log(`🎯 Material updated:`, art.material);
+                    console.log(`🖼️ ${artwork.title} texture loaded - keeping bright color for testing!`);
                 }, 
                 (progress) => {
                     if (progress.total > 0) {
@@ -543,8 +545,8 @@
             
             frameGroup.position.set(
                 startX + (index * spacing), // X: spread horizontally  
-                5, // Y: eye level
-                19.8 // Z: on front wall (slightly inset)
+                3, // Y: lower for character eye level
+                -19.0 // Z: on BACK wall where you can actually see it!
             );
             
             // Add simple gallery lighting
@@ -869,7 +871,7 @@
             // Create text texture using the existing createTextTexture function
             const colorHex = '#' + color.toString(16).padStart(6, '0');
             console.log('Creating neon text:', text, 'with color:', colorHex);
-            const textTexture = createTextTexture(text, '#1a1a1a', colorHex, 48);
+            const textTexture = createTextTexture(text, colorHex, '#1a1a1a', 48);
             const textMaterial = new THREE.MeshStandardMaterial({ 
                 map: textTexture,
                 emissive: color,
