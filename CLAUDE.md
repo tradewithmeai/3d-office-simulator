@@ -167,7 +167,7 @@ gh repo view --web                    # Open GitHub repo
 3D Office/
 ├── index.html              # Main application file
 ├── package.json             # Project configuration
-├── vercel.json             # Deployment settings
+├── vercel.json              # Deployment settings
 ├── .gitignore              # Git ignore rules
 ├── CLAUDE.md               # This development log
 └── .vercel/                # Vercel deployment config
@@ -217,6 +217,9 @@ gh repo view --web                    # Open GitHub repo
 
 ---
 
+## 📝 Debugging Notes
+- **Refresh Issue:** Nothing is changing when refreshing the browser. Suspected that changes are not taking effect. Recommended to test locally.
+
 *Last Updated: 2025-07-20*  
 *Status: Production Ready - Complete 3D Office with Working Gallery*
 
@@ -226,3 +229,19 @@ gh repo view --web                    # Open GitHub repo
 - ✅ **Custom Characters:** Unique personalities with interactive conversations
 - ✅ **Performance Optimized:** WebGL limits respected and monitored
 - ✅ **Production Deployment:** Ready for live deployment with clean codebase
+
+### 🌟 Latest Development Session Achievements
+- 🚀 Successfully loaded 3D Office Simulator in local development mode
+- 🎨 Created a gallery with 3 custom artworks:
+  - Escher Vision (positioned at X: -4)
+  - Renaissance Drawing (positioned at X: 0)
+  - Realistic Oil (positioned at X: 4)
+- 🏗️ Constructed wall geometry with precise positioning
+  - Back wall at (x: 0, y: 5, z: -19.9)
+  - Front wall at (x: 0, y: 5, z: 20)
+- 🚨 Added neon signs for visual interest
+  - EXIT sign in green at (x: 19.8, y: 6, z: 0)
+  - CAFE sign in pink/magenta at (x: -19.8, y: 4, z: 8)
+- 🎮 Implemented basic movement controls (WASD, E to interact, SPACE to dance)
+- 🖼️ Successfully processed and applied textures for all gallery artworks
+- 🔧 Verified WebGL texture handling with max texture size of 16384
